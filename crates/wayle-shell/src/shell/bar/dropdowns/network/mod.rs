@@ -27,12 +27,10 @@ use self::{
 use crate::{i18n::t, shell::bar::dropdowns::scaled_dimension};
 
 const BASE_WIDTH: f32 = 382.0;
-const BASE_HEIGHT: f32 = 512.0;
 
 pub(crate) struct NetworkDropdown {
     network: Arc<NetworkService>,
     scaled_width: i32,
-    scaled_height: i32,
     wifi_enabled: bool,
     wifi_available: bool,
     scanning: bool,
@@ -56,8 +54,6 @@ impl Component for NetworkDropdown {
             set_has_arrow: false,
             #[watch]
             set_width_request: model.scaled_width,
-            #[watch]
-            set_height_request: model.scaled_height,
 
             #[template]
             Dropdown {
@@ -117,7 +113,6 @@ impl Component for NetworkDropdown {
                 #[template]
                 DropdownContent {
                     add_css_class: "network-content",
-                    set_vexpand: true,
 
                     #[local_ref]
                     active_connections_widget -> gtk::Box {},
@@ -126,9 +121,7 @@ impl Component for NetworkDropdown {
                     vpn_tunnels_widget -> gtk::Box {},
 
                     #[local_ref]
-                    available_networks_widget -> gtk::Box {
-                        set_vexpand: true,
-                    },
+                    available_networks_widget -> gtk::Box {},
                 },
             },
         }
@@ -170,7 +163,6 @@ impl Component for NetworkDropdown {
         let mut model = Self {
             network: init.network,
             scaled_width: scaled_dimension(BASE_WIDTH, scale),
-            scaled_height: scaled_dimension(BASE_HEIGHT, scale),
             wifi_enabled,
             wifi_available,
             scanning: false,
@@ -251,7 +243,6 @@ impl Component for NetworkDropdown {
         match msg {
             NetworkDropdownCmd::ScaleChanged(scale) => {
                 self.scaled_width = scaled_dimension(BASE_WIDTH, scale);
-                self.scaled_height = scaled_dimension(BASE_HEIGHT, scale);
             }
 
             NetworkDropdownCmd::WifiDeviceChanged => {

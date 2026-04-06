@@ -23,7 +23,7 @@ dropdown-network-no-adapter-description = No wireless adapter was detected on th
 ## VPN / WireGuard
 
 dropdown-network-wireguard-tunnels = WireGuard Tunnels
-dropdown-network-wireguard-import = Import
+dropdown-network-wireguard-import = Import WireGuard Configuration
 
 ## Security Types
 
