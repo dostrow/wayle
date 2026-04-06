@@ -5,6 +5,7 @@ pub(crate) mod helpers;
 mod messages;
 mod methods;
 mod password_form;
+mod vpn_tunnels;
 mod watchers;
 
 use std::sync::Arc;
@@ -21,6 +22,7 @@ use self::{
         AvailableNetworks, AvailableNetworksInit, AvailableNetworksInput, AvailableNetworksOutput,
     },
     messages::{NetworkDropdownCmd, NetworkDropdownInit, NetworkDropdownMsg},
+    vpn_tunnels::{VpnTunnels, VpnTunnelsInit},
 };
 use crate::{i18n::t, shell::bar::dropdowns::scaled_dimension};
 
@@ -35,6 +37,7 @@ pub(crate) struct NetworkDropdown {
     wifi_available: bool,
     scanning: bool,
     active_connections: Controller<ActiveConnections>,
+    vpn_tunnels: Controller<VpnTunnels>,
     available_networks: Controller<AvailableNetworks>,
     wifi_watcher: WatcherToken,
 }
@@ -120,6 +123,9 @@ impl Component for NetworkDropdown {
                     active_connections_widget -> gtk::Box {},
 
                     #[local_ref]
+                    vpn_tunnels_widget -> gtk::Box {},
+
+                    #[local_ref]
                     available_networks_widget -> gtk::Box {
                         set_vexpand: true,
                     },
@@ -138,6 +144,14 @@ impl Component for NetworkDropdown {
                 network: init.network.clone(),
             })
             .detach();
+
+        let vpn_tunnels = VpnTunnels::builder()
+            .launch(VpnTunnelsInit {
+                network: init.network.clone(),
+                config: init.config.clone(),
+                provider: vpn_tunnels::providers::wireguard_config(),
+            })
+            .forward(sender.input_sender(), NetworkDropdownMsg::VpnTunnels);
 
         let available_networks = AvailableNetworks::builder()
             .launch(AvailableNetworksInit {
@@ -161,6 +175,7 @@ impl Component for NetworkDropdown {
             wifi_available,
             scanning: false,
             active_connections,
+            vpn_tunnels,
             available_networks,
             wifi_watcher: WatcherToken::new(),
         };
@@ -168,6 +183,7 @@ impl Component for NetworkDropdown {
         model.reset_wifi_watchers(&sender);
 
         let active_connections_widget = model.active_connections.widget();
+        let vpn_tunnels_widget = model.vpn_tunnels.widget();
         let available_networks_widget = model.available_networks.widget();
         let widgets = view_output!();
 
@@ -182,6 +198,9 @@ impl Component for NetworkDropdown {
             NetworkDropdownMsg::ScanRequested => {
                 self.available_networks
                     .emit(AvailableNetworksInput::ScanRequested);
+            }
+            NetworkDropdownMsg::VpnTunnels(_output) => {
+                // VPN tunnel events are handled internally by the component
             }
             NetworkDropdownMsg::AvailableNetworks(output) => match output {
                 AvailableNetworksOutput::ScanStarted => {
